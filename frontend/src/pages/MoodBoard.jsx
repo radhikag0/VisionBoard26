@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Upload, Trash2, RotateCw } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { mockCollageImages } from '../mock';
 
@@ -9,23 +9,51 @@ const MoodBoard = () => {
   const [images, setImages] = useState(mockCollageImages);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const resizeStartRef = useRef({ width: 0, height: 0, x: 0, y: 0 });
+  const rotateStartRef = useRef({ angle: 0, centerX: 0, centerY: 0 });
 
-  const handleMouseDown = (e, imageId) => {
+  const handleMouseDown = (e, imageId, action = 'move') => {
+    e.stopPropagation();
     const image = images.find(img => img.id === imageId);
-    if (image) {
-      setSelectedImage(imageId);
+    if (!image) return;
+
+    setSelectedImage(imageId);
+
+    if (action === 'move') {
       setIsDragging(true);
       const rect = e.currentTarget.getBoundingClientRect();
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       });
+    } else if (action === 'resize') {
+      setIsResizing(true);
+      resizeStartRef.current = {
+        width: image.width,
+        height: image.height,
+        x: e.clientX,
+        y: e.clientY
+      };
+    } else if (action === 'rotate') {
+      setIsRotating(true);
+      const rect = e.currentTarget.parentElement.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      rotateStartRef.current = {
+        angle: image.position.rotation,
+        centerX,
+        centerY
+      };
     }
   };
 
   const handleMouseMove = (e) => {
-    if (isDragging && selectedImage) {
+    if (!selectedImage) return;
+
+    if (isDragging) {
       const containerRect = e.currentTarget.getBoundingClientRect();
       const newX = e.clientX - containerRect.left - dragOffset.x;
       const newY = e.clientY - containerRect.top - dragOffset.y;
@@ -37,11 +65,39 @@ const MoodBoard = () => {
             : img
         )
       );
+    } else if (isResizing) {
+      const deltaX = e.clientX - resizeStartRef.current.x;
+      const newWidth = Math.max(150, resizeStartRef.current.width + deltaX);
+      const aspectRatio = resizeStartRef.current.height / resizeStartRef.current.width;
+      const newHeight = newWidth * aspectRatio;
+
+      setImages(prevImages =>
+        prevImages.map(img =>
+          img.id === selectedImage
+            ? { ...img, width: newWidth, height: newHeight }
+            : img
+        )
+      );
+    } else if (isRotating) {
+      const deltaX = e.clientX - rotateStartRef.current.centerX;
+      const deltaY = e.clientY - rotateStartRef.current.centerY;
+      const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+      const newRotation = angle;
+
+      setImages(prevImages =>
+        prevImages.map(img =>
+          img.id === selectedImage
+            ? { ...img, position: { ...img.position, rotation: newRotation } }
+            : img
+        )
+      );
     }
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    setIsResizing(false);
+    setIsRotating(false);
   };
 
   const handleAddImage = () => {
