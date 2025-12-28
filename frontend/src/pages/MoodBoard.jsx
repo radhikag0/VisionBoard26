@@ -111,16 +111,6 @@ const MoodBoard = () => {
     setImages([...images, newImage]);
   };
 
-  const handleRotate = (imageId) => {
-    setImages(prevImages =>
-      prevImages.map(img =>
-        img.id === imageId
-          ? { ...img, position: { ...img.position, rotation: (img.position.rotation + 15) % 360 } }
-          : img
-      )
-    );
-  };
-
   const handleDelete = (imageId) => {
     setImages(prevImages => prevImages.filter(img => img.id !== imageId));
     if (selectedImage === imageId) setSelectedImage(null);
