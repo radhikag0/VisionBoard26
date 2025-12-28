@@ -9,37 +9,62 @@ import { goalsAPI } from '../services/api';
 
 const Goals = () => {
   const navigate = useNavigate();
-  const [goals, setGoals] = useState(mockGoals);
+  const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState({ title: '', category: '' });
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleAddGoal = () => {
-    if (newGoal.title.trim() && newGoal.category.trim()) {
-      const goal = {
-        id: Date.now().toString(),
-        title: newGoal.title,
-        category: newGoal.category,
-        completed: false,
-        createdAt: new Date().toISOString()
-      };
-      setGoals([...goals, goal]);
-      setNewGoal({ title: '', category: '' });
-      setShowAddForm(false);
+  useEffect(() => {
+    fetchGoals();
+  }, []);
+
+  const fetchGoals = async () => {
+    try {
+      const data = await goalsAPI.getAll();
+      setGoals(data);
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleToggleGoal = (id) => {
-    setGoals(prevGoals =>
-      prevGoals.map(goal =>
-        goal.id === id ? { ...goal, completed: !goal.completed } : goal
-      )
-    );
+  const handleAddGoal = async () => {
+    if (newGoal.title.trim() && newGoal.category.trim()) {
+      try {
+        const createdGoal = await goalsAPI.create(newGoal);
+        setGoals([...goals, createdGoal]);
+        setNewGoal({ title: '', category: '' });
+        setShowAddForm(false);
+      } catch (error) {
+        console.error('Error creating goal:', error);
+      }
+    }
   };
 
-  const handleDeleteGoal = (id) => {
-    setGoals(prevGoals => prevGoals.filter(goal => goal.id !== id));
+  const handleToggleGoal = async (id) => {
+    const goal = goals.find(g => g.id === id);
+    if (!goal) return;
+
+    try {
+      const updatedGoal = await goalsAPI.update(id, { completed: !goal.completed });
+      setGoals(prevGoals =>
+        prevGoals.map(g => g.id === id ? updatedGoal : g)
+      );
+    } catch (error) {
+      console.error('Error updating goal:', error);
+    }
+  };
+
+  const handleDeleteGoal = async (id) => {
+    try {
+      await goalsAPI.delete(id);
+      setGoals(prevGoals => prevGoals.filter(goal => goal.id !== id));
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+    }
   };
 
   const handleEditStart = (goal) => {
@@ -47,13 +72,16 @@ const Goals = () => {
     setEditText(goal.title);
   };
 
-  const handleEditSave = (id) => {
+  const handleEditSave = async (id) => {
     if (editText.trim()) {
-      setGoals(prevGoals =>
-        prevGoals.map(goal =>
-          goal.id === id ? { ...goal, title: editText } : goal
-        )
-      );
+      try {
+        const updatedGoal = await goalsAPI.update(id, { title: editText });
+        setGoals(prevGoals =>
+          prevGoals.map(goal => goal.id === id ? updatedGoal : goal)
+        );
+      } catch (error) {
+        console.error('Error updating goal:', error);
+      }
     }
     setEditingId(null);
     setEditText('');
