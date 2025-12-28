@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Upload, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { mockCollageImages } from '../mock';
+import { moodboardAPI } from '../services/api';
 
 const MoodBoard = () => {
   const navigate = useNavigate();
