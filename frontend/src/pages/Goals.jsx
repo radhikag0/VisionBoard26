@@ -96,6 +96,14 @@ const Goals = () => {
   const completedCount = goals.filter(g => g.completed).length;
   const progressPercentage = goals.length > 0 ? Math.round((completedCount / goals.length) * 100) : 0;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50 flex items-center justify-center">
+        <p className="text-xl text-gray-600">Loading goals...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
