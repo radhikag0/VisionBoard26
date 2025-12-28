@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Calendar, Flag, Check, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Checkbox } from '../components/ui/checkbox';
-import { mockTodos } from '../mock';
+import { todosAPI } from '../services/api';
 
 const TodoList = () => {
   const navigate = useNavigate();
