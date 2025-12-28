@@ -147,7 +147,7 @@ const MoodBoard = () => {
         <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-6 border-2 border-pink-100">
           <p className="text-gray-600 text-center">
             <Upload className="w-4 h-4 inline mr-2" />
-            Drag images to reposition • Click on an image to select • Use rotate button to adjust angle
+            Drag images to reposition • Hold bottom-right corner to resize • Hold top-right corner to rotate
           </p>
         </div>
 
