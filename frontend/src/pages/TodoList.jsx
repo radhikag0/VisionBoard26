@@ -10,9 +10,25 @@ import { todosAPI } from '../services/api';
 
 const TodoList = () => {
   const navigate = useNavigate();
-  const [todos, setTodos] = useState(mockTodos);
+  const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState({ title: '', priority: 'medium', dueDate: '' });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
+  const fetchTodos = async () => {
+    try {
+      const data = await todosAPI.getAll();
+      setTodos(data);
+    } catch (error) {
+      console.error('Error fetching todos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const priorityColors = {
     high: 'bg-rose-400 text-white',
@@ -20,32 +36,40 @@ const TodoList = () => {
     low: 'bg-fuchsia-200 text-gray-700'
   };
 
-  const handleAddTodo = () => {
+  const handleAddTodo = async () => {
     if (newTodo.title.trim()) {
-      const todo = {
-        id: Date.now().toString(),
-        title: newTodo.title,
-        priority: newTodo.priority,
-        dueDate: newTodo.dueDate,
-        completed: false,
-        createdAt: new Date().toISOString()
-      };
-      setTodos([...todos, todo]);
-      setNewTodo({ title: '', priority: 'medium', dueDate: '' });
-      setShowAddForm(false);
+      try {
+        const createdTodo = await todosAPI.create(newTodo);
+        setTodos([...todos, createdTodo]);
+        setNewTodo({ title: '', priority: 'medium', dueDate: '' });
+        setShowAddForm(false);
+      } catch (error) {
+        console.error('Error creating todo:', error);
+      }
     }
   };
 
-  const handleToggleTodo = (id) => {
-    setTodos(prevTodos =>
-      prevTodos.map(todo =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
+  const handleToggleTodo = async (id) => {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+
+    try {
+      const updatedTodo = await todosAPI.update(id, { completed: !todo.completed });
+      setTodos(prevTodos =>
+        prevTodos.map(t => t.id === id ? updatedTodo : t)
+      );
+    } catch (error) {
+      console.error('Error updating todo:', error);
+    }
   };
 
-  const handleDeleteTodo = (id) => {
-    setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
+  const handleDeleteTodo = async (id) => {
+    try {
+      await todosAPI.delete(id);
+      setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+    }
   };
 
   const activeTodos = todos.filter(t => !t.completed);
