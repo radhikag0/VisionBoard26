@@ -8,15 +8,30 @@ import { galleryAPI } from '../services/api';
 
 const Gallery = () => {
   const navigate = useNavigate();
-  const [items, setItems] = useState(mockGalleryItems);
+  const [items, setItems] = useState([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [newItem, setNewItem] = useState({ title: '', description: '', type: 'image' });
   const [selectedItem, setSelectedItem] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddItem = () => {
+  useEffect(() => {
+    fetchGalleryItems();
+  }, []);
+
+  const fetchGalleryItems = async () => {
+    try {
+      const data = await galleryAPI.getAll();
+      setItems(data);
+    } catch (error) {
+      console.error('Error fetching gallery items:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddItem = async () => {
     if (newItem.title.trim()) {
       const item = {
-        id: Date.now().toString(),
         type: newItem.type,
         url: newItem.type === 'image'
           ? 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'
@@ -25,16 +40,35 @@ const Gallery = () => {
         description: newItem.description,
         date: new Date().toISOString().split('T')[0]
       };
-      setItems([item, ...items]);
-      setNewItem({ title: '', description: '', type: 'image' });
-      setShowUploadForm(false);
+      
+      try {
+        const createdItem = await galleryAPI.create(item);
+        setItems([createdItem, ...items]);
+        setNewItem({ title: '', description: '', type: 'image' });
+        setShowUploadForm(false);
+      } catch (error) {
+        console.error('Error adding gallery item:', error);
+      }
     }
   };
 
-  const handleDeleteItem = (id) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
-    if (selectedItem?.id === id) setSelectedItem(null);
+  const handleDeleteItem = async (id) => {
+    try {
+      await galleryAPI.delete(id);
+      setItems(prevItems => prevItems.filter(item => item.id !== id));
+      if (selectedItem?.id === id) setSelectedItem(null);
+    } catch (error) {
+      console.error('Error deleting gallery item:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50 flex items-center justify-center">
+        <p className="text-xl text-gray-600">Loading gallery...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50">
