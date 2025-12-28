@@ -75,6 +75,14 @@ const TodoList = () => {
   const activeTodos = todos.filter(t => !t.completed);
   const completedTodos = todos.filter(t => t.completed);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50 flex items-center justify-center">
+        <p className="text-xl text-gray-600">Loading todos...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
