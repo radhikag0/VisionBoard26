@@ -162,51 +162,60 @@ const MoodBoard = () => {
           {images.map((image) => (
             <div
               key={image.id}
-              className={`absolute cursor-move group ${
+              className={`absolute group ${
                 selectedImage === image.id ? 'ring-4 ring-pink-400' : ''
               }`}
-              style={
-                {
+              style={{
                 left: `${image.position.x}px`,
                 top: `${image.position.y}px`,
                 transform: `rotate(${image.position.rotation}deg)`,
                 zIndex: image.position.zIndex,
                 width: `${image.width}px`,
                 height: `${image.height}px`,
-                transition: isDragging ? 'none' : 'transform 0.2s ease'
+                transition: (isDragging || isResizing || isRotating) ? 'none' : 'transform 0.2s ease'
               }}
-              onMouseDown={(e) => handleMouseDown(e, image.id)}
               onClick={() => setSelectedImage(image.id)}
             >
-              <img
-                src={image.url}
-                alt="collage item"
-                className="w-full h-full object-cover rounded-lg shadow-lg"
-                draggable={false}
-              />
+              <div
+                className="w-full h-full cursor-move"
+                onMouseDown={(e) => handleMouseDown(e, image.id, 'move')}
+              >
+                <img
+                  src={image.url}
+                  alt="collage item"
+                  className="w-full h-full object-cover rounded-lg shadow-lg"
+                  draggable={false}
+                />
+              </div>
+              
               {selectedImage === image.id && (
-                <div className="absolute -top-12 left-0 right-0 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRotate(image.id);
-                    }}
-                    className="bg-pink-400 hover:bg-pink-500 text-white"
-                  >
-                    <RotateCw className="w-4 h-4" />
-                  </Button>
+                <>
+                  {/* Delete button */}
                   <Button
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(image.id);
                     }}
-                    className="bg-rose-400 hover:bg-rose-500 text-white"
+                    className="absolute -top-3 -right-3 bg-rose-400 hover:bg-rose-500 text-white w-8 h-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
-                </div>
+                  
+                  {/* Resize handle (bottom-right) */}
+                  <div
+                    className="absolute bottom-0 right-0 w-6 h-6 bg-pink-400 rounded-full cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    style={{ transform: 'translate(50%, 50%)' }}
+                    onMouseDown={(e) => handleMouseDown(e, image.id, 'resize')}
+                  />
+                  
+                  {/* Rotate handle (top-right) */}
+                  <div
+                    className="absolute top-0 right-0 w-6 h-6 bg-fuchsia-400 rounded-full cursor-crosshair opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    style={{ transform: 'translate(50%, -50%)' }}
+                    onMouseDown={(e) => handleMouseDown(e, image.id, 'rotate')}
+                  />
+                </>
               )}
             </div>
           ))}
