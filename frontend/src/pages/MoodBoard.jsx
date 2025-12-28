@@ -1,0 +1,181 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, Upload, Trash2, RotateCw } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { mockCollageImages } from '../mock';
+
+const MoodBoard = () => {
+  const navigate = useNavigate();
+  const [images, setImages] = useState(mockCollageImages);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e, imageId) => {
+    const image = images.find(img => img.id === imageId);
+    if (image) {
+      setSelectedImage(imageId);
+      setIsDragging(true);
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && selectedImage) {
+      const containerRect = e.currentTarget.getBoundingClientRect();
+      const newX = e.clientX - containerRect.left - dragOffset.x;
+      const newY = e.clientY - containerRect.top - dragOffset.y;
+
+      setImages(prevImages =>
+        prevImages.map(img =>
+          img.id === selectedImage
+            ? { ...img, position: { ...img.position, x: newX, y: newY, zIndex: Math.max(...prevImages.map(i => i.position.zIndex)) + 1 } }
+            : img
+        )
+      );
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleAddImage = () => {
+    const newImage = {
+      id: Date.now().toString(),
+      url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
+      position: { x: 100, y: 100, rotation: 0, zIndex: images.length + 1 },
+      width: 280,
+      height: 200
+    };
+    setImages([...images, newImage]);
+  };
+
+  const handleRotate = (imageId) => {
+    setImages(prevImages =>
+      prevImages.map(img =>
+        img.id === imageId
+          ? { ...img, position: { ...img.position, rotation: (img.position.rotation + 15) % 360 } }
+          : img
+      )
+    );
+  };
+
+  const handleDelete = (imageId) => {
+    setImages(prevImages => prevImages.filter(img => img.id !== imageId));
+    if (selectedImage === imageId) setSelectedImage(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="gap-2 hover:bg-pink-100 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-400 via-rose-400 to-fuchsia-400 bg-clip-text text-transparent">
+            Mood Board Collage
+          </h1>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleAddImage}
+              className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white gap-2 transition-all duration-300"
+            >
+              <Plus className="w-4 h-4" />
+              Add Image
+            </Button>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-6 border-2 border-pink-100">
+          <p className="text-gray-600 text-center">
+            <Upload className="w-4 h-4 inline mr-2" />
+            Drag images to reposition • Click on an image to select • Use rotate button to adjust angle
+          </p>
+        </div>
+
+        {/* Collage Canvas */}
+        <div
+          className="relative bg-white/60 backdrop-blur-sm rounded-2xl border-4 border-pink-200 overflow-hidden shadow-xl"
+          style={{ height: '700px' }}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {images.map((image) => (
+            <div
+              key={image.id}
+              className={`absolute cursor-move group ${
+                selectedImage === image.id ? 'ring-4 ring-pink-400' : ''
+              }`}
+              style={
+                {
+                left: `${image.position.x}px`,
+                top: `${image.position.y}px`,
+                transform: `rotate(${image.position.rotation}deg)`,
+                zIndex: image.position.zIndex,
+                width: `${image.width}px`,
+                height: `${image.height}px`,
+                transition: isDragging ? 'none' : 'transform 0.2s ease'
+              }}
+              onMouseDown={(e) => handleMouseDown(e, image.id)}
+              onClick={() => setSelectedImage(image.id)}
+            >
+              <img
+                src={image.url}
+                alt="collage item"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+                draggable={false}
+              />
+              {selectedImage === image.id && (
+                <div className="absolute -top-12 left-0 right-0 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRotate(image.id);
+                    }}
+                    className="bg-pink-400 hover:bg-pink-500 text-white"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(image.id);
+                    }}
+                    className="bg-rose-400 hover:bg-rose-500 text-white"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))}
+          {images.length === 0 && (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <div className="text-center">
+                <Upload className="w-16 h-16 mx-auto mb-4" />
+                <p className="text-xl">Start adding images to create your mood board</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MoodBoard;
