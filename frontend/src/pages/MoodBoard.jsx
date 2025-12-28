@@ -6,14 +6,39 @@ import { moodboardAPI } from '../services/api';
 
 const MoodBoard = () => {
   const navigate = useNavigate();
-  const [images, setImages] = useState(mockCollageImages);
+  const [images, setImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [loading, setLoading] = useState(true);
   const resizeStartRef = useRef({ width: 0, height: 0, x: 0, y: 0 });
   const rotateStartRef = useRef({ angle: 0, centerX: 0, centerY: 0 });
+  const updateTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
+  const fetchImages = async () => {
+    try {
+      const data = await moodboardAPI.getAll();
+      setImages(data);
+    } catch (error) {
+      console.error('Error fetching moodboard images:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveImageUpdate = async (imageId, updateData) => {
+    try {
+      await moodboardAPI.update(imageId, updateData);
+    } catch (error) {
+      console.error('Error updating image:', error);
+    }
+  };
 
   const handleMouseDown = (e, imageId, action = 'move') => {
     e.stopPropagation();
