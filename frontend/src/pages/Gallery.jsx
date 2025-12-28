@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Upload, X, Play, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
-import { mockGalleryItems } from '../mock';
+import { galleryAPI } from '../services/api';
 
 const Gallery = () => {
   const navigate = useNavigate();
