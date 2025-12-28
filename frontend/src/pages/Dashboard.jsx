@@ -83,17 +83,7 @@ const Dashboard = () => {
           })}
         </div>
 
-        {/* Quote Section */}
-        <div className="mt-12 text-center">
-          <Card className="border-2 border-pink-200 bg-gradient-to-r from-pink-100/50 to-fuchsia-100/50 backdrop-blur-sm">
-            <CardContent className="py-8">
-              <p className="text-2xl font-light text-gray-700 italic">
-                "The future belongs to those who believe in the beauty of their dreams."
-              </p>
-              <p className="text-sm text-gray-500 mt-3">- Eleanor Roosevelt</p>
-            </CardContent>
-          </Card>
-        </div>
+ 
       </div>
     </div>
   );
