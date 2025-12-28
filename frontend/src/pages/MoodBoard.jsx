@@ -120,26 +120,58 @@ const MoodBoard = () => {
   };
 
   const handleMouseUp = () => {
+    if (selectedImage && (isDragging || isResizing || isRotating)) {
+      const image = images.find(img => img.id === selectedImage);
+      if (image) {
+        // Debounce the save operation
+        if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+        updateTimeoutRef.current = setTimeout(() => {
+          saveImageUpdate(selectedImage, {
+            position: image.position,
+            width: image.width,
+            height: image.height
+          });
+        }, 500);
+      }
+    }
     setIsDragging(false);
     setIsResizing(false);
     setIsRotating(false);
   };
 
-  const handleAddImage = () => {
+  const handleAddImage = async () => {
     const newImage = {
-      id: Date.now().toString(),
       url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
       position: { x: 100, y: 100, rotation: 0, zIndex: images.length + 1 },
       width: 280,
       height: 200
     };
-    setImages([...images, newImage]);
+    
+    try {
+      const createdImage = await moodboardAPI.create(newImage);
+      setImages([...images, createdImage]);
+    } catch (error) {
+      console.error('Error adding image:', error);
+    }
   };
 
-  const handleDelete = (imageId) => {
-    setImages(prevImages => prevImages.filter(img => img.id !== imageId));
-    if (selectedImage === imageId) setSelectedImage(null);
+  const handleDelete = async (imageId) => {
+    try {
+      await moodboardAPI.delete(imageId);
+      setImages(prevImages => prevImages.filter(img => img.id !== imageId));
+      if (selectedImage === imageId) setSelectedImage(null);
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50 flex items-center justify-center">
+        <p className="text-xl text-gray-600">Loading mood board...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-fuchsia-50">
