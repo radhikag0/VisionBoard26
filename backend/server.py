@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import List
 import shutil
+import uuid # Imported at the top to ensure it is available for the upload endpoint
 
 from models import (
     Goal, GoalCreate, GoalUpdate,
@@ -34,8 +35,22 @@ todos_collection = db.todos
 moodboard_collection = db.moodboard
 gallery_collection = db.gallery
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Root route defined on the main app
+@app.get("/")
+async def root():
+    return {"message": "2026 Vision Board API"}
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -159,16 +174,16 @@ async def delete_gallery_item(item_id: str):
 @api_router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:
-        # Create unique filename
+        # Create unique filename using uuid
         file_extension = Path(file.filename).suffix
         unique_filename = f"{uuid.uuid4()}{file_extension}"
         file_path = UPLOADS_DIR / unique_filename
         
-        # Save file
+        # Save file to local disk
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # Return URL path
+        # Return the URL path for the frontend
         file_url = f"/uploads/{unique_filename}"
         return {"url": file_url}
     except Exception as e:
@@ -176,20 +191,8 @@ async def upload_file(file: UploadFile = File(...)):
     finally:
         file.file.close()
 
-@api_router.get("/")
-async def root():
-    return {"message": "2026 Vision Board API"}
-
 # Include the router in the main app
 app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Configure logging
 logging.basicConfig(
@@ -201,5 +204,3 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
-
-import uuid
